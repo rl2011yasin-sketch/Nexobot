@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ربات‌ساز | پنل کاربری</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif}
+  :root{
+    --bg:#0f1220; --card:#1a1f35; --card2:#252b45; --accent:#6c5ce7;
+    --accent2:#a29bfe; --green:#00b894; --red:#e74c3c; --yellow:#fdcb6e;
+    --text:#eaeaf2; --dim:#888;
+  }
+  body{background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:80px}
+  .container{max-width:900px;margin:0 auto;padding:16px}
+  header{background:linear-gradient(135deg,#6c5ce7,#a29bfe);padding:16px 20px;
+    display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+  header h1{font-size:18px}
+  header .coins{background:rgba(0,0,0,.25);padding:6px 14px;border-radius:20px;font-size:14px}
+  .nav{display:flex;gap:6px;overflow-x:auto;padding:10px 16px;background:var(--card);
+    border-bottom:1px solid #2a2f4a;position:sticky;top:56px;z-index:99}
+  .nav button{background:transparent;border:none;color:var(--dim);padding:8px 14px;
+    border-radius:10px;cursor:pointer;font-size:14px;white-space:nowrap;font-family:inherit}
+  .nav button.active{background:var(--accent);color:#fff}
+  .card{background:var(--card);border-radius:16px;padding:20px;margin-bottom:14px;
+    border:1px solid #2a2f4a}
+  .card h2{font-size:18px;margin-bottom:12px;color:var(--accent2)}
+  .btn{background:var(--accent);color:#fff;border:none;padding:12px 20px;
+    border-radius:12px;cursor:pointer;font-size:15px;font-family:inherit;
+    transition:.2s;width:100%;margin-top:8px}
+  .btn:hover{background:var(--accent2)}
+  .btn.green{background:var(--green)}
+  .btn.red{background:var(--red)}
+  .btn.ghost{background:transparent;border:1px solid #444;color:var(--text)}
+  input,textarea,select{width:100%;padding:12px;border-radius:12px;border:1px solid #333;
+    background:var(--card2);color:var(--text);font-size:15px;margin-top:8px;
+    font-family:inherit;outline:none}
+  input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+  label{display:block;margin-top:12px;font-size:13px;color:var(--dim)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+  .tile{background:var(--card2);border-radius:14px;padding:16px;text-align:center;
+    cursor:pointer;border:2px solid transparent;transition:.2s}
+  .tile:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .tile .icon{font-size:32px;margin-bottom:8px}
+  .tile .name{font-weight:600;margin-bottom:4px}
+  .tile .price{font-size:12px;color:var(--yellow)}
+  .rank{display:flex;justify-content:space-between;padding:10px 14px;
+    background:var(--card2);border-radius:10px;margin-bottom:6px;font-size:14px}
+  .rank .medal{font-size:18px;min-width:30px}
+  .rank .name{flex:1;margin:0 10px}
+  .rank .val{color:var(--yellow);font-weight:600}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;
+    justify-content:center;align-items:center;z-index:999;padding:16px}
+  .modal.show{display:flex}
+  .modal .box{background:var(--card);border-radius:20px;padding:24px;
+    width:100%;max-width:400px;max-height:90vh;overflow:auto}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--card2);padding:12px 24px;border-radius:12px;
+    border:1px solid var(--accent);z-index:1000;opacity:0;transition:.3s;pointer-events:none}
+  .toast.show{opacity:1}
+  .toast.err{border-color:var(--red)}
+  .empty{text-align:center;padding:40px;color:var(--dim)}
+  .badge{display:inline-block;background:var(--accent);padding:2px 10px;
+    border-radius:20px;font-size:11px;margin-right:6px}
+  .badge.vip{background:linear-gradient(90deg,#fdcb6e,#e17055)}
+  .badge.green{background:var(--green)}
+  .badge.red{background:var(--red)}
+  .muted{color:var(--dim);font-size:13px;margin-top:8px}
+  code{background:var(--card2);padding:2px 8px;border-radius:6px;font-size:13px}
+  .center{text-align:center}
+  .mt{margin-top:12px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🤖 ربات‌ساز</h1>
+  <div class="coins" id="headerCoins" style="display:none">💰 0</div>
+</header>
+
+<nav class="nav" id="nav" style="display:none">
+  <button data-tab="dashboard" class="active">🏠 داشبورد</button>
+  <button data-tab="create">➕ ساخت ربات</button>
+  <button data-tab="mybots">📋 ربات‌های من</button>
+  <button data-tab="shop">🛍 فروشگاه</button>
+  <button data-tab="leaderboard">🏆 لیدربورد</button>
+  <button data-tab="coins">💰 سکه</button>
+  <button data-tab="support">📞 پشتیبانی</button>
+  <button data-tab="admin" id="adminTab" style="display:none">🔐 ادمین</button>
+</nav>
+
+<div class="container" id="app"></div>
+
+<div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPPORT_ID = "@Yasin002023";
+
+let ME = null;
+let BOT_TYPES = {};
+let currentTab = 'dashboard';
+
+const $ = id => document.getElementById(id);
+
+function toast(msg, isErr) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.toggle("err", !!isErr);
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2500);
+}
+
+async function api(url, method = "GET", data) {
+  const opts = { method, headers: {"Content-Type": "application/json"}, credentials: "same-origin" };
+  if (data) opts.body = JSON.stringify(data);
+  const r = await fetch(url, opts);
+  const j = await r.json().catch(() => ({ok:false}));
+  return j;
+}
+
+function fmt(n) { return new Intl.NumberFormat("fa-IR").format(n); }
+
+function renderLogin() {
+  $("nav").style.display = "none";
+  $("headerCoins").style.display = "none";
+  $("app").innerHTML = `
+    <div class="card" style="max-width:420px;margin:40px auto">
+      <h2 class="center">🎉 ورود / ثبت‌نام</h2>
+      <label>شناسه کاربری</label>
+      <input id="inUid" placeholder="مثلاً: yasin2024">
+      <label>نام نمایشی</label>
+      <input id="inName" placeholder="نام شما">
+      <label>رمز عبور</label>
+      <input id="inPwd" type="password" placeholder="حداقل ۴ کاراکتر">
+      <label>کد دعوت (اختیاری)</label>
+      <input id="inRef" placeholder="کد معرف">
+      <button class="btn green" onclick="doAuth('login')">🔑 ورود</button>
+      <button class="btn" onclick="doAuth('register')">✨ ثبت‌نام</button>
+      <p class="muted center mt">اگر قبلاً ثبت‌نام کرده‌اید فقط شناسه و رمز را وارد کنید و «ورود» بزنید.</p>
+    </div>`;
+}
+
+async function doAuth(mode) {
+  const uid = $("inUid").value.trim();
+  const name = $("inName").value.trim();
+  const password = $("inPwd").value.trim();
+  const ref = $("inRef").value.trim();
+  const r = await api("/api/" + mode, "POST", {uid, name, password, ref});
+  if (!r.ok) return toast(r.err || "خطا", true);
+  toast("خوش آمدید 🌹");
+  await init();
+}
+
+async function loadMe() {
+  const r = await api("/api/me");
+  if (!r.ok) return null;
+  ME = r;
+  $("headerCoins").textContent = "💰 " + fmt(r.coins);
+  $("headerCoins").style.display = "block";
+  $("nav").style.display = "flex";
+  $("adminTab").style.display = r.is_owner ? "" : "none";
+  return r;
+}
+
+document.querySelectorAll("#nav button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll("#nav button").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    currentTab = b.dataset.tab;
+    renderTab();
+  };
+});
+
+async function renderTab() {
+  $("app").innerHTML = '<div class="empty">⏳ در حال بارگذاری...</div>';
+  if (currentTab === "dashboard") return renderDashboard();
+  if (currentTab === "create") return renderCreate();
+  if (currentTab === "mybots") return renderMyBots();
+  if (currentTab === "shop") return renderShop();
+  if (currentTab === "leaderboard") return renderLeaderboard();
+  if (currentTab === "coins") return renderCoins();
+  if (currentTab === "support") return renderSupport();
+  if (currentTab === "admin") return renderAdmin();
+}
+
+async function renderDashboard() {
+  await loadMe();
+  $("app").innerHTML = `
+    <div class="card">
+      <h2>👋 سلام ${ME.name}!</h2>
+      ${ME.vip ? `<p><span class="badge vip">👑 VIP</span> ${ME.vip_days} روز باقی‌مانده</p>` : ""}
+      <div class="grid mt">
+        <div class="tile"><div class="icon">💰</div><div class="name">${fmt(ME.coins)}</div><div class="price">سکه</div></div>
+        <div class="tile"><div class="icon">🤖</div><div class="name">${ME.bot_count}/${ME.bot_limit}</div><div class="price">ربات</div></div>
+        <div class="tile"><div class="icon">👥</div><div class="name">${fmt(ME.invites_count)}</div><div class="price">دعوت</div></div>
+      </div>
+      <button class="btn green" onclick="go('coins')">🎁 دریافت سکه روزانه</button>
+      <button class="btn" onclick="go('create')">➕ ساخت ربات جدید</button>
+      <button class="btn ghost" onclick="doLogout()">🚪 خروج</button>
+    </div>`;
+}
+
+function go(tab) {
+  document.querySelectorAll("#nav button").forEach(b => {
+    b.classList.toggle("active", b.dataset.tab === tab);
+  });
+  currentTab = tab;
+  renderTab();
+}
+
+async function doLogout() {
+  await api("/api/logout", "POST");
+  location.reload();
+}
+
+async function renderCreate() {
+  const r = await api("/api/bot-types");
+  BOT_TYPES = r.types || {};
+  let tiles = "";
+  for (const [k, v] of Object.entries(BOT_TYPES)) {
+    tiles += `<div class="tile" onclick="openCreate('${k}')">
+      <div class="icon">${v.icon}</div>
+      <div class="name">${v.name}</div>
+      <div class="price">${v.price === 0 ? "رایگان" : v.price + " سکه"}</div>
+    </div>`;
+  }
+  $("app").innerHTML = `
+    <div class="card">
+      <h2>➕ ساخت ربات جدید</h2>
+      <p class="muted">💰 سکه: ${fmt(ME.coins)} | 🤖 ظرفیت: ${ME.bot_count}/${ME.bot_limit}</p>
+      <div class="grid mt">${tiles}</div>
+    </div>`;
+}
+
+function openCreate(type) {
+  const t = BOT_TYPES[type];
+  $("modalBox").innerHTML = `
+    <h2 class="center">${t.icon} ${t.name}</h2>
+    <p class="center muted">قیمت: ${t.price === 0 ? "رایگان" : t.price + " سکه"}</p>
+    <label>توکن ربات (از BotFather روبیکا)</label>
+    <input id="cToken" placeholder="توکن ربات را اینجا بگذارید">
+    <label>رمز مدیریت (برای پنل ادمین ربات)</label>
+    <input id="cPwd" placeholder="رمز برای پنل ادمین ربات">
+    <button class="btn green" onclick="submitCreate('${type}')">✅ ساخت و روشن کردن ربات</button>
+    <button class="btn ghost" onclick="closeModal()">❌ انصراف</button>`;
+  $("modal").classList.add("show");
+}
+
+async function submitCreate(type) {
+  const token = $("cToken").value.trim();
+  const password = $("cPwd").value.trim();
+  const r = await api("/api/bots/create", "POST", {type, token, password});
+  if (!r.ok) return toast(r.err || "خطا", true);
+  toast("✅ ربات ساخته و روشن شد!");
+  closeModal();
+  go("mybots");
+}
+
+function closeModal() { $("modal").classList.remove("show"); }
+
+async function renderMyBots() {
+  const r = await api("/api/bots");
+  if (!r.bots.length) {
+    $("app").innerHTML = `<div class="card"><h2>📋 ربات‌های من</h2>
+      <div class="empty">هنوز رباتی نساختی 🙃<br><br>
+      <button class="btn" onclick="go('create')">➕ ساخت اولین ربات</button></div></div>`;
+    return;
+  }
+  let html = `<div class="card"><h2>📋 ربات‌های من (${r.count}/${r.limit})</h2>`;
+  r.bots.forEach((b, i) => {
+    const t = BOT_TYPES[b.type] || {icon: "🤖", name: b.type};
+    const isOn = b.running !== undefined ? b.running : b.active;
+    html += `
+      <div class="rank" style="flex-wrap:wrap;gap:8px">
+        <span class="medal">${t.icon}</span>
+        <span class="name">${i+1}. ${t.name}</span>
+        <span class="val">
+          ${isOn ? '<span class="badge green">🟢 روشن</span>' : '<span class="badge red">🔴 خاموش</span>'}
+        </span>
+        <div style="display:flex;gap:6px;width:100%;margin-top:8px">
+          <button class="btn" style="margin:0;padding:8px" onclick="toggleBot('${b.bot_id}')">
+            ${isOn ? "🔴 خاموش" : "🟢 روشن"}
+          </button>
+          <button class="btn red" style="margin:0;padding:8px" onclick="deleteBot('${b.bot_id}')">🗑 حذف</button>
+        </div>
+      </div>`;
+  });
+  html += `</div>`;
+  $("app").innerHTML = html;
+}
+
+async function toggleBot(bid) {
+  const r = await api("/api/bots/toggle", "POST", {bot_id: bid});
+  if (!r.ok) return toast(r.err || "خطا", true);
+  toast(r.active ? "🟢 روشن شد" : "🔴 خاموش شد");
+  renderMyBots();
+}
+
+async function deleteBot(bid) {
+  if (!confirm("مطمئنی؟")) return;
+  const r = await api("/api/bots/delete", "POST", {bot_id: bid});
+  if (!r.ok) return toast(r.err || "خطا", true);
+  toast("🗑 حذف شد");
+  renderMyBots();
+}
+
+async function renderShop() {
+  const s = await api("/api/settings");
+  $("app").innerHTML = `
+    <div class="card">
+      <h2>🛍 فروشگاه</h2>
+      <div class="tile" onclick="buyVip()" style="margin-bottom:10px">
+        <div class="icon">👑</div>
+        <div class="name">خرید VIP</div>
+        <div class="price">${s.vip_cost} سکه / ۳۰ روز</div>
+      </div>
+      <div class="tile">
+        <div class="icon">📢</div>
+        <div class="name">تبلیغات</div>
+        <div class="price">۱۰,۰۰۰ تومان</div>
+      </div>
+      <p class="muted mt">📞 برای خرید تبلیغات به ${s.support} پیام دهید.</p>
+    </div>`;
+}
+
+async function buyVip() {
+  const r = await api("/api/buy-vip", "POST");
+  if (!r.ok) return toast(r.err || "خطا", true);
+  toast("👑 VIP فعال شد!");
+  await loadMe();
+  renderShop();
+}
+
+async function renderLeaderboard() {
+  $("app").innerHTML = `
+    <div class="card">
+      <h2>🏆 لیدربورد</h2>
+      <div class="grid" style="grid-template-columns:repeat(3,1fr)">
+        <button class="btn" onclick="loadLB('coins')">💰 سکه</button>
+        <button class="btn" onclick="loadLB('invites')">👥 دعوت</button>
+        <button class="btn" onclick="loadLB('bots')">🤖 ربات</button>
+      </div>
+      <div id="lbResult" class="mt"></div>
+    </div>`;
+  loadLB("coins");
+}
+
+async function loadLB(by) {
+  const r = await api("/api/leaderboard?by=" + by);
+  const medals = ["🥇","🥈","🥉"];
+  let html = "";
+  if (!r.top.length) html = '<div class="empty">هنوز کسی ثبت نشده</div>';
+  else r.top.forEach((x, i) => {
+    html += `<div class="rank">
+      <span class="medal">${medals[i] || (i+1) + "."}</span>
+      <span class="name">${x.name}</span>
+      <span class="val">${fmt(x.value)}</span>
+    </div>`;
+  });
+  $("lbResult").innerHTML = html;
+}
+
+async function renderCoins() {
+  const inv = await api("/api/invite");
+  $("app").innerHTML = `
+    <div class="card">
+      <h2>💰 سکه و دعوت</h2>
+      <p>موجودی: <b>${fmt(ME.coins)}</b> سکه</p>
+      <p>👥 دعوت‌های موفق: <b>${fmt(inv.count)}</b></p>
+      <button class="btn green" onclick="getDaily()">🎁 دریافت سکه روزانه</button>
+      <div class="mt">
+        <label>🔑 کد دعوت شما</label>
+        <input value="${inv.code}" readonly>
+        <p class="muted">دوستت این کد رو توی بخش «کد دعوت» هنگام ثبت‌نام وارد کنه تا ${inv.reward} سکه بگیری!</p>
+      </div>
+    </div>`;
+}
+
+async function getDaily() {
+  const r = await api("/api/daily", "POST");
+  if (!r.ok) return toast(r.err, true);
+  toast(`🎁 ${r.amount} سکه گرفتی!`);
+  await loadMe();
+  renderCoins();
+}
+
+async function renderSupport() {
+  const r = await api("/api/tickets");
+  let list = "";
+  if (!r.tickets.length) list = '<div class="empty">هنوز تیکتی نداری</div>';
+  else r.tickets.forEach(t => {
+    list += `<div class="rank">
+      <span class="medal">${t.status === "open" ? "🟢" : "✅"}</span>
+      <span class="name">${t.subject}</span>
+      <span class="val">${t.id}</span>
+    </div>`;
+  });
+  $("app").innerHTML = `
+    <div class="card">
+      <h2>📞 پشتیبانی</h2>
+      <p class="muted">آیدی پشتیبانی: <code>${SUPPORT_ID}</code></p>
+      <label>موضوع تیکت</label>
+      <input id="tSub" placeholder="موضوع مشکل">
+      <label>پیام</label>
+      <textarea id="tMsg" rows="4" placeholder="توضیح مشکل..."></textarea>
+      <button class="btn green" onclick="sendTicket()">🎫 ارسال تیکت</button>
+    </div>
+    <div class="card">
+      <h2>📋 تیکت‌های من</h2>
+      ${list}
+    </div>`;
+}
+
+async function sendTicket() {
+  const subject = $("tSub").value.trim();
+  const message = $("tMsg").value.trim();
+  const r = await api("/api/tickets", "POST", {subject, message});
+  if (!r.ok) return toast(r.err, true);
+  toast("✅ تیکت ارسال شد");
+  renderSupport();
+}
+
+async function renderAdmin() {
+  if (!ME.is_owner) { $("app").innerHTML = '<div class="card"><h2>❌ دسترسی ندارید</h2></div>'; return; }
+  if (!ME.is_admin) {
+    $("app").innerHTML = `
+      <div class="card">
+        <h2>🔐 ورود ادمین</h2>
+        <label>رمز ادمین</label>
+        <input id="aPass" type="password" placeholder="رمز">
+        <button class="btn" onclick="adminLogin()">🔓 ورود</button>
+      </div>`;
+    return;
+  }
+  const s = await api("/api/admin/stats");
+  $("app").innerHTML = `
+    <div class="card">
+      <h2>🔐 پنل مدیریت</h2>
+      <div class="grid">
+        <div class="tile"><div class="icon">👥</div><div class="name">${s.users}</div><div class="price">کاربر</div></div>
+        <div class="tile"><div class="icon">👑</div><div class="name">${s.vips}</div><div class="price">VIP</div></div>
+        <div class="tile"><div class="icon">🤖</div><div class="name">${s.bots}</div><div class="price">ربات</div></div>
+        <div class="tile"><div class="icon">🎫</div><div class="name">${s.tickets}</div><div class="price">تیکت</div></div>
+      </div>
+      <h2 class="mt">💰 اهدای سکه</h2>
+      <input id="gUid" placeholder="شناسه کاربر">
+      <input id="gAmt" type="number" placeholder="مقدار سکه">
+      <button class="btn green" onclick="giveCoins()">ارسال سکه</button>
+    </div>`;
+}
+
+async function adminLogin() {
+  const r = await api("/api/admin/login", "POST", {password: $("aPass").value});
+  if (!r.ok) return toast(r.err, true);
+  toast("✅ خوش آمدید");
+  await loadMe();
+  renderAdmin();
+}
+
+async function giveCoins() {
+  const uid = $("gUid").value.trim();
+  const amount = parseInt($("gAmt").value) || 0;
+  const r = await api("/api/admin/give-coins", "POST", {uid, amount});
+  if (!r.ok) return toast(r.err, true);
+  toast("✅ انجام شد");
+}
+
+async function init() {
+  const me = await loadMe();
+  if (!me) return renderLogin();
+  renderDashboard();
+}
+
+init();
+</script>
+</body>
+  </html>
